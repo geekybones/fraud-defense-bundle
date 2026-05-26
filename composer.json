@@ -1,0 +1,63 @@
+{
+    "name": "geekybones/fraud-defense-bundle",
+    "description": "Symfony bundle for Google reCAPTCHA Enterprise (forms, validation, score and checkbox widgets)",
+    "version": "1.0.0",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": ["symfony", "bundle", "google", "recaptcha", "recaptcha-enterprise"],
+    "require": {
+        "php": "^8.2",
+        "google/cloud-recaptcha-enterprise": "^2.0",
+        "psr/log": "^3.0",
+        "symfony/config": "^7.0|^8.0",
+        "symfony/dependency-injection": "^7.0|^8.0",
+        "symfony/form": "^7.0|^8.0",
+        "symfony/http-foundation": "^7.0|^8.0",
+        "symfony/http-kernel": "^7.0|^8.0",
+        "twig/twig": "^3.0"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.64",
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^11.0|^12.0|^13.0",
+        "rector/rector": "^2.0",
+        "symfony/twig-bridge": "^7.0",
+        "symfony/yaml": "^7.0|^8.0"
+    },
+    "scripts": {
+        "test": "phpunit",
+        "phpstan": "phpstan analyse --memory-limit=256M",
+        "cs-check": "php-cs-fixer fix --dry-run --diff",
+        "cs-fix": "php-cs-fixer fix",
+        "rector": "rector process",
+        "rector-check": "rector process --dry-run",
+        "lint": [
+            "@cs-check",
+            "@phpstan",
+            "@rector-check"
+        ],
+        "fix": [
+            "@cs-fix",
+            "@rector"
+        ]
+    },
+    "autoload": {
+        "psr-4": {
+            "GeekyBones\\FraudDefenseBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "GeekyBones\\FraudDefenseBundle\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "symfony": {
+            "recipe-dir": "recipe"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

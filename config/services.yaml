@@ -1,0 +1,70 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    GeekyBones\FraudDefenseBundle\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/FraudDefenseBundle.php'
+            - '../src/Defense/Contract/'
+            - '../src/Defense/Model/'
+
+    GeekyBones\FraudDefenseBundle\Client\EnterpriseClientFactory:
+        arguments:
+            $apiKey: '%fraud_defense.api_key%'
+
+    GeekyBones\FraudDefenseBundle\Assessment\AssessmentClient:
+        arguments:
+            $projectId: '%fraud_defense.project_id%'
+
+    GeekyBones\FraudDefenseBundle\Assessment\AssessmentClientInterface:
+        alias: GeekyBones\FraudDefenseBundle\Assessment\AssessmentClient
+
+    GeekyBones\FraudDefenseBundle\Defense\SiteKeyResolver:
+        arguments:
+            $siteKey: '%fraud_defense.site_key%'
+            $checkboxSiteKey: '%fraud_defense.checkbox_site_key%'
+
+    GeekyBones\FraudDefenseBundle\Defense\Service\RecaptchaAssessment:
+        arguments:
+            $minScore: '%fraud_defense.min_score%'
+            $expectedHostname: '%fraud_defense.expected_hostname%'
+
+    GeekyBones\FraudDefenseBundle\Form\RecaptchaType:
+        arguments:
+            $failOnApiError: '%fraud_defense.fail_on_api_error%'
+
+    GeekyBones\FraudDefenseBundle\Form\TransactionRecaptchaType:
+        arguments:
+            $transactionAssessment: null
+            $failOnApiError: '%fraud_defense.fail_on_api_error%'
+            $defaultMinScore: '%fraud_defense.min_score%'
+
+    GeekyBones\FraudDefenseBundle\Form\SmsRecaptchaType:
+        arguments:
+            $smsAssessment: null
+            $failOnApiError: '%fraud_defense.fail_on_api_error%'
+
+    GeekyBones\FraudDefenseBundle\Defense\Contract\RecaptchaAssessmentInterface:
+        alias: GeekyBones\FraudDefenseBundle\Defense\Service\RecaptchaAssessment
+        public: true
+
+    GeekyBones\FraudDefenseBundle\Defense\Service\TransactionAssessment:
+        arguments:
+            $maxTransactionRisk: '%fraud_defense.transaction_defense.max_transaction_risk%'
+            $expectedHostname: '%fraud_defense.expected_hostname%'
+
+    GeekyBones\FraudDefenseBundle\Defense\Contract\TransactionAssessmentInterface:
+        alias: GeekyBones\FraudDefenseBundle\Defense\Service\TransactionAssessment
+        public: true
+
+    GeekyBones\FraudDefenseBundle\Defense\Service\SmsAssessment:
+        arguments:
+            $maxSmsRisk: '%fraud_defense.sms_defense.max_sms_risk%'
+            $expectedHostname: '%fraud_defense.expected_hostname%'
+
+    GeekyBones\FraudDefenseBundle\Defense\Contract\SmsAssessmentInterface:
+        alias: GeekyBones\FraudDefenseBundle\Defense\Service\SmsAssessment
+        public: true

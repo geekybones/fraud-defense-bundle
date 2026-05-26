@@ -1,0 +1,23 @@
+{
+    "bundles": {
+        "GeekyBones\\FraudDefenseBundle\\FraudDefenseBundle": ["all"]
+    },
+    "copy-from-recipe": {
+        "config/": "%CONFIG_DIR%/"
+    },
+    "env": {
+        "FRAUD_DEFENSE_PROJECT_ID": {
+            "default": ""
+        },
+        "FRAUD_DEFENSE_SITE_KEY": {
+            "default": ""
+        },
+        "FRAUD_DEFENSE_API_KEY": {
+            "default": ""
+        },
+        "FRAUD_DEFENSE_CHECKBOX_SITE_KEY": {
+            "default": "",
+            "is_optional": true
+        }
+    }
+}

@@ -1,0 +1,109 @@
+{% block recaptcha_widget %}
+    <input type="hidden" {{ block('widget_attributes') }} value="">
+    {% if recaptcha_type == 'checkbox' %}
+        <div id="recaptcha-container-{{ id }}" class="fraud-defense-recaptcha-checkbox"></div>
+    {% endif %}
+    <script>
+        (function () {
+            var config = {
+                inputId: {{ id|json_encode|raw }},
+                siteKey: {{ site_key|json_encode|raw }},
+                action: {{ action|json_encode|raw }},
+                loadScript: {{ load_script ? 'true' : 'false' }},
+                type: {{ recaptcha_type|json_encode|raw }}
+            };
+
+            var input = document.getElementById(config.inputId);
+            if (!input) {
+                return;
+            }
+
+            var enterpriseBase = 'https://www.google.com/recaptcha/enterprise.js';
+            var scriptLoads = window.__fraudDefenseRecaptchaScriptLoads = window.__fraudDefenseRecaptchaScriptLoads || {};
+
+            function setToken(token) {
+                input.value = token;
+            }
+
+            function whenEnterpriseReady(callback) {
+                if (typeof grecaptcha !== 'undefined') {
+                    grecaptcha.enterprise.ready(callback);
+                    return;
+                }
+
+                if (!config.loadScript) {
+                    console.warn(
+                        '[FraudDefense] reCAPTCHA Enterprise is not loaded. ' +
+                        'Set load_script to true or add recaptcha_script() to your layout.'
+                    );
+                    return;
+                }
+
+                var src = 'checkbox' === config.type
+                    ? enterpriseBase + '?render=explicit'
+                    : enterpriseBase + '?render=' + encodeURIComponent(config.siteKey);
+
+                var pending = scriptLoads[src];
+                if (pending) {
+                    pending.callbacks.push(callback);
+                    return;
+                }
+
+                pending = { callbacks: [callback] };
+                scriptLoads[src] = pending;
+
+                var script = document.createElement('script');
+                script.src = src;
+                script.async = true;
+                script.defer = true;
+                script.onload = function () {
+                    var callbacks = pending.callbacks.splice(0);
+                    delete scriptLoads[src];
+                    callbacks.forEach(function (cb) {
+                        grecaptcha.enterprise.ready(cb);
+                    });
+                };
+                script.onerror = function () {
+                    delete scriptLoads[src];
+                    pending.callbacks = [];
+                    console.error('[FraudDefense] Failed to load reCAPTCHA Enterprise script.');
+                };
+                document.head.appendChild(script);
+            }
+
+            var widgetId = null;
+
+            function initCheckbox() {
+                var containerId = 'recaptcha-container-' + config.inputId;
+
+                function renderWidget() {
+                    widgetId = grecaptcha.enterprise.render(containerId, {
+                        sitekey: config.siteKey,
+                        action: config.action,
+                        callback: setToken
+                    });
+                }
+
+                whenEnterpriseReady(renderWidget);
+            }
+
+            function initScore() {
+                function executeRecaptcha() {
+                    return grecaptcha.enterprise.execute(config.siteKey, { action: config.action })
+                        .then(function (token) {
+                            setToken(token);
+                            return token;
+                        });
+                }
+
+                whenEnterpriseReady(executeRecaptcha);
+            }
+
+            if ('checkbox' === config.type) {
+                initCheckbox();
+            } else {
+                initScore();
+            }
+        })();
+    </script>
+{% endblock recaptcha_widget %}
