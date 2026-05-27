@@ -9,7 +9,7 @@ use LogicException;
 final class SiteKeyResolver
 {
     public function __construct(
-        private readonly string $siteKey,
+        private readonly ?string $siteKey,
         private readonly ?string $checkboxSiteKey,
     ) {
     }
@@ -18,7 +18,7 @@ final class SiteKeyResolver
     {
         return match ($type) {
             'checkbox' => $this->checkboxSiteKey ?? throw new LogicException('No "checkbox_site_key" is configured under fraud_defense. It is required when using type: checkbox.'),
-            default => $this->siteKey,
+            default => $this->siteKey ?? throw new LogicException('No "site_key" is configured under fraud_defense. It is required when using the default recaptcha type.'),
         };
     }
 }

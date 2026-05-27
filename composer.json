@@ -1,7 +1,7 @@
 {
     "name": "geekybones/fraud-defense-bundle",
     "description": "Symfony bundle for Google reCAPTCHA Enterprise (forms, validation, score and checkbox widgets)",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "type": "symfony-bundle",
     "license": "MIT",
     "keywords": ["symfony", "bundle", "google", "recaptcha", "recaptcha-enterprise"],

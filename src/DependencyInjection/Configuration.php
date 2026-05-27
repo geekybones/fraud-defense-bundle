@@ -28,8 +28,7 @@ class Configuration implements ConfigurationInterface
             ->cannotBeEmpty()
             ->end()
             ->scalarNode('site_key')
-            ->isRequired()
-            ->cannotBeEmpty()
+            ->defaultNull()
             ->end()
             ->scalarNode('checkbox_site_key')
             ->defaultNull()
@@ -74,6 +73,10 @@ class Configuration implements ConfigurationInterface
             ->end()
             ->end()
             ->end()
+            ->end()
+            ->validate()
+            ->ifTrue(fn (array $v): bool => null === ($v['site_key'] ?? null) && null === ($v['checkbox_site_key'] ?? null))
+            ->thenInvalid('At least one of "site_key" or "checkbox_site_key" must be configured under fraud_defense.')
             ->end()
         ;
 
