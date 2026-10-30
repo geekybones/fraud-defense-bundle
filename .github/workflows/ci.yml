@@ -24,7 +24,7 @@ jobs:
           - php: "8.4"
             symfony: "7.4.*"
           - php: "8.4"
-            symfony: "8.0.*"
+            symfony: "8.1.*"
 
     steps:
       - uses: actions/checkout@v4

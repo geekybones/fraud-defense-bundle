@@ -5,8 +5,8 @@ Symfony integration for [Google reCAPTCHA Enterprise](https://cloud.google.com/r
 | | |
 |---|---|
 | Package | `geekybones/fraud-defense-bundle` |
-| PHP | `^8.2` |
-| Symfony | `^7.0` or `^8.0` |
+| PHP | `^8.1` |
+| Symfony | `^6.4`, `^7.0` or `^8.0` |
 | License | MIT |
 
 ---
