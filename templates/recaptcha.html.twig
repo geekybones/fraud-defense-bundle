@@ -3,7 +3,7 @@
     {% if recaptcha_type == 'checkbox' %}
         <div id="recaptcha-container-{{ id }}" class="fraud-defense-recaptcha-checkbox"></div>
     {% endif %}
-    <script>
+    <script{% if nonce is not null and nonce != '' %} nonce="{{ nonce }}"{% endif %}>
         (function () {
             var config = {
                 inputId: {{ id|json_encode|raw }},
@@ -11,6 +11,7 @@
                 action: {{ action|json_encode|raw }},
                 loadScript: {{ load_script ? 'true' : 'false' }},
                 type: {{ recaptcha_type|json_encode|raw }},
+                nonce: {{ nonce|json_encode|raw }},
                 clientValidation: {{ client_validation|json_encode|raw }}
             };
 
@@ -91,6 +92,9 @@
 
                 var script = document.createElement('script');
                 script.src = src;
+                if (config.nonce) {
+                    script.nonce = config.nonce;
+                }
                 script.async = true;
                 script.defer = true;
                 script.onload = function () {

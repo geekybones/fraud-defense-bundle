@@ -118,6 +118,26 @@ When `missing_message` is not set, it depends on `type`:
 
 The server-side check is unchanged and remains the real validation. A form submitted from JavaScript with `form.submit()` does not fire a `submit` event and skips the client check; use `form.requestSubmit()` instead.
 
+### Content Security Policy (nonce)
+
+If your site sends a CSP header that requires a nonce on scripts, give the widget the same nonce. It is added to the widget's inline `<script>` and to the `enterprise.js` script it loads.
+
+In Twig, pass it as a variable. This example uses `csp_nonce()` from [NelmioSecurityBundle](https://github.com/nelmio/NelmioSecurityBundle); use whatever returns your page's nonce:
+
+```twig
+{{ form_row(form.captcha, {nonce: csp_nonce('script')}) }}
+```
+
+If you already have the nonce as a string in PHP, use the option instead: `'nonce' => $nonce`.
+
+With `load_script: false`, pass the nonce to the script helper (programmatic pages: see [CSP nonce with programmatic usage](#csp-nonce-with-programmatic-usage)):
+
+```twig
+{{ recaptcha_script('score', csp_nonce('script')) }}
+```
+
+The `nonce` is added only when it is a non-empty string. Google's `enterprise.js` may load more scripts itself, so check Google's reCAPTCHA Enterprise documentation on Content Security Policy for the extra rules your policy needs.
+
 ---
 
 ## Programmatic usage
@@ -212,8 +232,24 @@ Two Twig functions are available:
 
 | Function | Returns |
 |----------|---------|
-| `recaptcha_script(type)` | The `<script>` tag for `enterprise.js`. Put it once in your layout, not once per form |
+| `recaptcha_script(type, nonce)` | The `<script>` tag for `enterprise.js`. Put it once in your layout, not once per form. `nonce` is optional, see [CSP nonce](#csp-nonce-with-programmatic-usage) |
 | `recaptcha_site_key(type)` | The public site key for `type` (`'score'` by default, or `'checkbox'`). Safe to render in HTML |
+
+### CSP nonce with programmatic usage
+
+With a nonce-based CSP, two scripts on your page need the nonce. The bundle can add it to the first only:
+
+```twig
+{# 1. enterprise.js: the bundle adds the nonce #}
+{{ recaptcha_script('score', csp_nonce('script')) }}
+
+{# 2. your own inline script that calls grecaptcha: add the nonce yourself #}
+<script nonce="{{ csp_nonce('script') }}">
+    grecaptcha.enterprise.ready(() => { /* ... */ });
+</script>
+```
+
+Without the nonce on your own inline script, the browser blocks it and no token is requested. `csp_nonce()` is from [NelmioSecurityBundle](https://github.com/nelmio/NelmioSecurityBundle); use whatever returns your page's nonce. For the Symfony form field, see [Content Security Policy (nonce)](#content-security-policy-nonce).
 
 ### Variants
 
@@ -296,6 +332,7 @@ Get `SITE_KEY` from Twig with `{{ recaptcha_site_key('score')|json_encode|raw }}
 | `min_score` | `null` | Override `fraud_defense.min_score`; `null` uses the configured default |
 | `load_script` | `true` | Set `false` to load `enterprise.js` from your layout via `recaptcha_script()` |
 | `fail_on_api_error` | from config | `false` allows the form through when the Google API is unreachable |
+| `nonce` | `null` | CSP nonce for the widget's inline `<script>` and the `enterprise.js` it loads. See [Content Security Policy](#content-security-policy-nonce) |
 | `missing_message` | by `type` | Error shown when the token is absent, on the server and in the browser when `client_validation` is on. See [Default messages](#default-messages) |
 | `client_validation` | `false` | Browser-side check, see [Client-side validation](#client-side-validation). `true` enables it with defaults; an array may set `class` (default `fraud-defense-recaptcha-error`) and `message` (default `missing_message`) |
 | `failed_message` | built-in | Error shown when the assessment does not pass |

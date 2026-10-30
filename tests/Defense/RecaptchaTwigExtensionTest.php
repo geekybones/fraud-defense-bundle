@@ -17,4 +17,14 @@ final class RecaptchaTwigExtensionTest extends TestCase
         self::assertSame('score-key', $extension->siteKey());
         self::assertSame('checkbox-key', $extension->siteKey('checkbox'));
     }
+
+    public function test_script_tag_carries_nonce_only_when_given(): void
+    {
+        $extension = new RecaptchaTwigExtension(new SiteKeyResolver('score-key', 'checkbox-key'));
+
+        self::assertStringNotContainsString('nonce', $extension->renderScript('score'));
+        self::assertStringNotContainsString('nonce', $extension->renderScript('score', ''));
+        self::assertStringContainsString(' nonce="0"', $extension->renderScript('score', '0'));
+        self::assertStringContainsString(' nonce="abc&quot;1"', $extension->renderScript('score', 'abc"1'));
+    }
 }

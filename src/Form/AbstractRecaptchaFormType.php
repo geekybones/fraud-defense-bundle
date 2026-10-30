@@ -37,6 +37,7 @@ abstract class AbstractRecaptchaFormType extends AbstractType
         $view->vars['recaptcha_type'] = $options['type'];
         $view->vars['load_script'] = $options['load_script'];
         $view->vars['client_validation'] = $options['client_validation'];
+        $view->vars['nonce'] = $options['nonce'];
     }
 
     public function getBlockPrefix(): string
@@ -77,10 +78,13 @@ abstract class AbstractRecaptchaFormType extends AbstractType
             'fail_on_api_error' => $this->failOnApiError,
             'load_script' => true,
             'client_validation' => false,
+            'nonce' => null,
             'mapped' => false,
         ]);
 
         $resolver->setAllowedTypes('client_validation', ['bool', 'array']);
+        $resolver->setAllowedTypes('nonce', ['null', 'string']);
+        $resolver->setInfo('nonce', 'CSP nonce added to the widget\'s inline <script> and to the enterprise.js script it loads; null adds none.');
         $resolver->setInfo('client_validation', 'Browser-side check that blocks a submit without a token. false (default) is off; true uses the default class and missing_message; an array may set "class" and/or "message".');
 
         $resolver->setAllowedTypes('action', 'string');

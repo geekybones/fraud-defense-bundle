@@ -270,6 +270,12 @@ class RecaptchaTypeTest extends TypeTestCase
         self::assertTrue($view->vars['load_script']);
     }
 
+    public function test_nonce_defaults_to_null_and_is_exposed_to_the_view(): void
+    {
+        self::assertNull($this->buildForm()->createView()['captcha']->vars['nonce']);
+        self::assertSame('n1', $this->buildForm(['nonce' => 'n1'])->createView()['captcha']->vars['nonce']);
+    }
+
     public function test_client_validation_off_by_default_true_and_custom(): void
     {
         self::assertNull($this->buildForm()->createView()['captcha']->vars['client_validation']);

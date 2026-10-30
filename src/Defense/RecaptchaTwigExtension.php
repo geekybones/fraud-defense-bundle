@@ -16,16 +16,22 @@ final class RecaptchaTwigExtension
     }
 
     /**
-     * @param string $type Widget type: score (default) or checkbox
+     * @param string      $type  Widget type: score (default) or checkbox
+     * @param string|null $nonce CSP nonce for the script tag
      */
     #[AsTwigFunction(name: 'recaptcha_script', isSafe: ['html'])]
-    public function renderScript(string $type = 'score'): string
+    public function renderScript(string $type = 'score', ?string $nonce = null): string
     {
         $src = 'checkbox' === $type
             ? self::ENTERPRISE_SCRIPT.'?render=explicit'
             : self::ENTERPRISE_SCRIPT.'?render='.rawurlencode($this->keyResolver->resolve($type));
 
-        return \sprintf('<script src="%s" async defer></script>', htmlspecialchars($src, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'));
+        $attrs = \sprintf(' src="%s"', htmlspecialchars($src, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'));
+        if (null !== $nonce && '' !== $nonce) {
+            $attrs .= \sprintf(' nonce="%s"', htmlspecialchars($nonce, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'));
+        }
+
+        return '<script'.$attrs.' async defer></script>';
     }
 
     /**

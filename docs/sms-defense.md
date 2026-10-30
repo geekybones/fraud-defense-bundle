@@ -93,6 +93,7 @@ if ($form->isSubmitted() && $form->isValid()) {
 | `sms_builder` | — | **Required.** `fn (FormInterface $form): SmsAssessmentContext` |
 | `max_sms_risk` | from config | Per-field override of `sms_defense.max_sms_risk` |
 | `load_script` | `true` | Set `false` to load `enterprise.js` from your layout via `recaptcha_script()` |
+| `nonce` | `null` | CSP nonce for the widget's inline `<script>` and the `enterprise.js` it loads. See [Content Security Policy](recaptcha.md#content-security-policy-nonce) |
 | `fail_on_api_error` | from config | `false` allows the form through when the Google API is unreachable |
 | `missing_message` | built-in | Error shown when the token is absent (see [defaults](recaptcha.md#default-messages)) |
 | `client_validation` | `false` | Block the submit in the browser when no token exists and show an error. `true` uses the defaults; an array sets `class` and/or `message`. See [recaptcha.md](recaptcha.md#client-side-validation) |
@@ -137,6 +138,8 @@ Load the script once in your layout, then request a token when the user submits.
 ```
 
 The `action` must match the one passed to `assess()`.
+
+Using a CSP nonce? Pass it to `recaptcha_script('score', csp_nonce('script'))` and add it to your inline `<script>`; see [CSP nonce with programmatic usage](recaptcha.md#csp-nonce-with-programmatic-usage).
 
 **Server-side**
 
