@@ -47,3 +47,22 @@ jobs:
 
       - name: Run tests
         run: vendor/bin/phpunit
+
+  lint:
+    name: "Lint (PHP CS Fixer, PHPStan, Rector)"
+    runs-on: ubuntu-latest
+    env:
+      PHP_CS_FIXER_IGNORE_ENV: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-progress --ansi
+
+      - name: Lint
+        run: composer lint
