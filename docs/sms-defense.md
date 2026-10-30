@@ -94,9 +94,10 @@ if ($form->isSubmitted() && $form->isValid()) {
 | `max_sms_risk` | from config | Per-field override of `sms_defense.max_sms_risk` |
 | `load_script` | `true` | Set `false` to load `enterprise.js` from your layout via `recaptcha_script()` |
 | `fail_on_api_error` | from config | `false` allows the form through when the Google API is unreachable |
-| `missing_message` | built-in | Error shown when the token is absent |
+| `missing_message` | built-in | Error shown when the token is absent (see [defaults](recaptcha.md#default-messages)) |
+| `client_validation` | `false` | Block the submit in the browser when no token exists and show an error. `true` uses the defaults; an array sets `class` and/or `message`. See [recaptcha.md](recaptcha.md#client-side-validation) |
 | `failed_message` | built-in | Error shown when the SMS risk check fails |
-| `api_error_message` | built-in | Fallback error when a `DefenseAssessmentException` has an empty message |
+| `api_error_message` | built-in | Error shown to the user when the Google API call fails. The real exception is logged, not shown |
 
 ---
 
@@ -106,12 +107,36 @@ Inject `SmsAssessmentInterface` when assessing outside a form:
 
 **Client-side**
 
-```javascript
-grecaptcha.enterprise.ready(() => {
-    grecaptcha.enterprise.execute('YOUR_SITE_KEY', { action: 'sms_otp' })
-        .then(token => { /* include token in the request body */ });
-});
+Load the script once in your layout, then request a token when the user submits. The full flow (form, fetch and checkbox variants) is in [recaptcha.md](recaptcha.md#programmatic-usage).
+
+```twig
+{{ recaptcha_script('score') }}
+
+<form method="post" id="otp-form">
+    <input type="hidden" name="recaptcha_token" id="recaptcha_token">
+    {# ... your fields ... #}
+    <button type="submit">Send</button>
+</form>
+
+<script>
+    const form = document.getElementById('otp-form');
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        grecaptcha.enterprise.ready(() => {
+            grecaptcha.enterprise
+                .execute({{ recaptcha_site_key('score')|json_encode|raw }}, { action: 'sms_otp' })
+                .then((token) => {
+                    document.getElementById('recaptcha_token').value = token;
+                    form.submit();
+                });
+        });
+    });
+</script>
 ```
+
+The `action` must match the one passed to `assess()`.
 
 **Server-side**
 
@@ -193,6 +218,18 @@ public function requestOtp(Request $request): Response
 - Expired, malformed, or already-used tokens
 - Missing `phoneFraudAssessment` (SMS toll fraud protection not enabled on the key)
 
-When using `SmsRecaptchaType`, the exception message is attached as a form error. When using programmatic assessment, catch it yourself.
+When using `SmsRecaptchaType`, the user sees `api_error_message` as a form error and the real exception is logged. When using programmatic assessment, catch it yourself.
 
-The message `"SMS Defense assessment did not return phoneFraudAssessment"` means SMS toll fraud protection is not enabled on your reCAPTCHA key in the Google Cloud Console.
+---
+
+## Troubleshooting
+
+| Message / symptom | Cause / fix |
+|-------------------|-------------|
+| `SMS Defense assessment did not return phoneFraudAssessment` | SMS toll fraud protection is not enabled on your reCAPTCHA key in the Google Cloud Console, or no phone number was sent. Enable it and pass `phoneNumber` (E.164) |
+| `SmsRecaptchaType requires fraud_defense.sms_defense.enabled: true.` | Set `sms_defense.enabled: true` in your YAML config |
+| `reCAPTCHA token is invalid` (expired, duplicate) | Token older than about 2 minutes or used twice; request a new token for every submit |
+| Request blocked with a valid token | The SMS risk was at or above `max_sms_risk` (equal blocks). Inspect `getSmsRisk()` and `getReasons()` |
+| Token field stays empty | `enterprise.js` never loaded; add `{{ recaptcha_script('score') }}` to your layout and check the browser console |
+
+Log `SmsAssessmentResult::getRaw()` in development to inspect the full Google response.

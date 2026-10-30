@@ -80,6 +80,8 @@ $builder->add('captcha', RecaptchaType::class, [
 
 Validation runs automatically on form submit. No controller changes needed.
 
+To also block the submit in the browser when no token exists, add `'client_validation' => true` (see [recaptcha.md](docs/recaptcha.md#client-side-validation) for styling and custom messages).
+
 ### Programmatic
 
 Inject the interface and call `assess()` directly — useful in APIs and controllers without forms:

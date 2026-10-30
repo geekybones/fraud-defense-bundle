@@ -108,6 +108,6 @@ class SmsRecaptchaTypeTest extends TypeTestCase
         $form->submit(['phone' => '+18005550175', 'captcha' => 'token']);
 
         self::assertFalse($form->isValid());
-        self::assertStringContainsString('SMS API down', (string) $form->getErrors());
+        self::assertStringContainsString('temporarily unavailable', (string) $form->getErrors());
     }
 }

@@ -11,6 +11,7 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
+use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Throwable;
@@ -35,6 +36,7 @@ abstract class AbstractRecaptchaFormType extends AbstractType
         $view->vars['action'] = $options['action'];
         $view->vars['recaptcha_type'] = $options['type'];
         $view->vars['load_script'] = $options['load_script'];
+        $view->vars['client_validation'] = $options['client_validation'];
     }
 
     public function getBlockPrefix(): string
@@ -56,13 +58,13 @@ abstract class AbstractRecaptchaFormType extends AbstractType
     }
 
     /**
+     * @param FormInterface<mixed> $field
      * @param array<string, mixed> $options
      */
-    protected function apiErrorMessage(Throwable $e, array $options): string
+    protected function addApiError(FormInterface $field, Throwable $e, array $options): void
     {
-        $message = trim($e->getMessage());
-
-        return '' !== $message ? $message : $options['api_error_message'];
+        $this->logger?->error('Fraud Defense assessment failed.', ['exception' => $e]);
+        $this->addFormError($field, $options['api_error_message']);
     }
 
     protected function configureBaseOptions(OptionsResolver $resolver): void
@@ -74,8 +76,12 @@ abstract class AbstractRecaptchaFormType extends AbstractType
             'api_error_message' => 'Security verification is temporarily unavailable. Please try again later.',
             'fail_on_api_error' => $this->failOnApiError,
             'load_script' => true,
+            'client_validation' => false,
             'mapped' => false,
         ]);
+
+        $resolver->setAllowedTypes('client_validation', ['bool', 'array']);
+        $resolver->setInfo('client_validation', 'Browser-side check that blocks a submit without a token. false (default) is off; true uses the default class and missing_message; an array may set "class" and/or "message".');
 
         $resolver->setAllowedTypes('action', 'string');
         $resolver->setAllowedTypes('type', 'string');
@@ -85,7 +91,20 @@ abstract class AbstractRecaptchaFormType extends AbstractType
         $resolver->setAllowedTypes('fail_on_api_error', 'bool');
         $resolver->setAllowedTypes('load_script', 'bool');
         $resolver->setInfo('load_script', 'When false, the widget does not inject enterprise.js; load it with recaptcha_script() in your layout.');
-        $resolver->setInfo('api_error_message', 'Fallback when an API exception has no message; otherwise the exception message is shown.');
+        $resolver->setInfo('api_error_message', 'Error shown when the assessment fails with an API exception; the exception itself is logged, not shown.');
+
+        $resolver->setNormalizer('client_validation', static function (Options $options, bool|array $value): ?array {
+            if (false === $value) {
+                return null;
+            }
+
+            $value = true === $value ? [] : $value;
+            if ($unknown = array_diff_key($value, ['class' => 1, 'message' => 1])) {
+                throw new InvalidOptionsException(\sprintf('Unknown "client_validation" key(s) "%s"; allowed: "class", "message".', implode('", "', array_keys($unknown))));
+            }
+
+            return $value + ['class' => 'fraud-defense-recaptcha-error', 'message' => $options['missing_message']];
+        });
 
         $resolver->setNormalizer('missing_message', static function (Options $options, ?string $value): string {
             if (null !== $value) {
