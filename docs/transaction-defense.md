@@ -150,9 +150,10 @@ public function checkout(Request $request): Response
 | `min_score` | from config | Minimum reCAPTCHA score required when `check_score` is `true` |
 | `load_script` | `true` | Set `false` to load `enterprise.js` from your layout via `recaptcha_script()` |
 | `fail_on_api_error` | from config | `false` allows the form through when the Google API is unreachable |
-| `missing_message` | built-in | Error shown when the token is absent |
+| `missing_message` | built-in | Error shown when the token is absent (see [defaults](recaptcha.md#default-messages)) |
+| `client_validation` | `false` | Block the submit in the browser when no token exists and show an error. `true` uses the defaults; an array sets `class` and/or `message`. See [recaptcha.md](recaptcha.md#client-side-validation) |
 | `failed_message` | built-in | Error shown when the transaction risk check fails |
-| `api_error_message` | built-in | Fallback error when a `DefenseAssessmentException` has an empty message |
+| `api_error_message` | built-in | Error shown to the user when the Google API call fails. The real exception is logged, not shown |
 
 ---
 
@@ -162,12 +163,36 @@ Inject `TransactionAssessmentInterface` when assessing transactions outside a fo
 
 **Client-side**
 
-```javascript
-grecaptcha.enterprise.ready(() => {
-    grecaptcha.enterprise.execute('YOUR_SITE_KEY', { action: 'purchase' })
-        .then(token => { /* include token in the request body */ });
-});
+Load the script once in your layout, then request a token when the user submits. The full flow (form, fetch and checkbox variants) is in [recaptcha.md](recaptcha.md#programmatic-usage).
+
+```twig
+{{ recaptcha_script('score') }}
+
+<form method="post" id="checkout-form">
+    <input type="hidden" name="recaptcha_token" id="recaptcha_token">
+    {# ... your fields ... #}
+    <button type="submit">Send</button>
+</form>
+
+<script>
+    const form = document.getElementById('checkout-form');
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        grecaptcha.enterprise.ready(() => {
+            grecaptcha.enterprise
+                .execute({{ recaptcha_site_key('score')|json_encode|raw }}, { action: 'purchase' })
+                .then((token) => {
+                    document.getElementById('recaptcha_token').value = token;
+                    form.submit();
+                });
+        });
+    });
+</script>
 ```
+
+The `action` must match the one passed to `assess()`.
 
 **Server-side**
 

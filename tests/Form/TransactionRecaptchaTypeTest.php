@@ -141,6 +141,6 @@ class TransactionRecaptchaTypeTest extends TypeTestCase
         $form->submit(['amount' => '99', 'captcha' => 'token']);
 
         self::assertFalse($form->isValid());
-        self::assertStringContainsString('API down', (string) $form->getErrors());
+        self::assertStringContainsString('temporarily unavailable', (string) $form->getErrors());
     }
 }

@@ -27,4 +27,13 @@ final class RecaptchaTwigExtension
 
         return \sprintf('<script src="%s" async defer></script>', htmlspecialchars($src, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'));
     }
+
+    /**
+     * @param string $type Widget type: score (default) or checkbox
+     */
+    #[AsTwigFunction(name: 'recaptcha_site_key')]
+    public function siteKey(string $type = 'score'): string
+    {
+        return $this->keyResolver->resolve($type);
+    }
 }

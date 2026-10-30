@@ -11,19 +11,24 @@ use GeekyBones\FraudDefenseBundle\Defense\SiteKeyResolver;
 use GeekyBones\FraudDefenseBundle\Form\RecaptchaType;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormTypeInterface;
 use Symfony\Component\Form\Test\TypeTestCase;
+use Symfony\Component\OptionsResolver\Exception\InvalidOptionsException;
 
 #[AllowMockObjectsWithoutExpectations]
 class RecaptchaTypeTest extends TypeTestCase
 {
     private MockObject&RecaptchaAssessmentInterface $assessment;
 
+    private MockObject&LoggerInterface $logger;
+
     protected function setUp(): void
     {
         $this->assessment = $this->createMock(RecaptchaAssessmentInterface::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
         parent::setUp();
     }
 
@@ -33,7 +38,7 @@ class RecaptchaTypeTest extends TypeTestCase
     protected function getTypes(): array
     {
         return [
-            new RecaptchaType(new SiteKeyResolver('test-site-key', 'checkbox-key'), $this->assessment, failOnApiError: true),
+            new RecaptchaType(new SiteKeyResolver('test-site-key', 'checkbox-key'), $this->assessment, failOnApiError: true, logger: $this->logger),
         ];
     }
 
@@ -179,24 +184,30 @@ class RecaptchaTypeTest extends TypeTestCase
         $form->submit(['captcha' => 'token']);
 
         self::assertFalse($form->isValid());
-        self::assertStringContainsString('API down', (string) $form->getErrors());
+        self::assertStringContainsString('temporarily unavailable', (string) $form->getErrors());
+        self::assertStringNotContainsString('API down', (string) $form->getErrors());
     }
 
-    public function test_api_error_falls_back_to_api_error_message_when_exception_message_is_empty(): void
+    public function test_api_error_message_is_shown_and_the_exception_is_logged(): void
     {
+        $exception = new DefenseAssessmentException('Requests from this referer are blocked.');
         $this->assessment
             ->expects(self::once())
             ->method('assess')
-            ->willThrowException(new DefenseAssessmentException(''));
+            ->willThrowException($exception);
+        $this->logger
+            ->expects(self::once())
+            ->method('error')
+            ->with(self::anything(), ['exception' => $exception]);
 
         $form = $this->buildForm([
             'fail_on_api_error' => true,
-            'api_error_message' => 'Custom fallback message.',
+            'api_error_message' => 'Custom message.',
         ]);
         $form->submit(['captcha' => 'token']);
 
-        self::assertFalse($form->isValid());
-        self::assertStringContainsString('Custom fallback message.', (string) $form->getErrors());
+        self::assertStringContainsString('Custom message.', (string) $form->getErrors());
+        self::assertStringNotContainsString('referer', (string) $form->getErrors());
     }
 
     public function test_api_error_is_ignored_when_fail_on_api_error_is_false(): void
@@ -257,6 +268,24 @@ class RecaptchaTypeTest extends TypeTestCase
         $view = $this->captchaField($form)->createView();
 
         self::assertTrue($view->vars['load_script']);
+    }
+
+    public function test_client_validation_off_by_default_true_and_custom(): void
+    {
+        self::assertNull($this->buildForm()->createView()['captcha']->vars['client_validation']);
+
+        $default = $this->buildForm(['client_validation' => true])->createView()['captcha']->vars['client_validation'];
+        self::assertSame('fraud-defense-recaptcha-error', $default['class']);
+        self::assertNotEmpty($default['message']);
+
+        $custom = $this->buildForm(['client_validation' => ['class' => 'my-err']])->createView()['captcha']->vars['client_validation'];
+        self::assertSame('my-err', $custom['class']);
+        self::assertSame($default['message'], $custom['message']);
+
+        self::assertNull($this->buildForm(['client_validation' => false])->createView()['captcha']->vars['client_validation']);
+
+        $this->expectException(InvalidOptionsException::class);
+        $this->buildForm(['client_validation' => ['colour' => 'red']]);
     }
 
     public function test_load_script_can_be_disabled(): void

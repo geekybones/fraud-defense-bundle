@@ -10,7 +10,8 @@
                 siteKey: {{ site_key|json_encode|raw }},
                 action: {{ action|json_encode|raw }},
                 loadScript: {{ load_script ? 'true' : 'false' }},
-                type: {{ recaptcha_type|json_encode|raw }}
+                type: {{ recaptcha_type|json_encode|raw }},
+                clientValidation: {{ client_validation|json_encode|raw }}
             };
 
             var input = document.getElementById(config.inputId);
@@ -18,11 +19,47 @@
                 return;
             }
 
+            var errorEl = null;
+
+            function showError() {
+                if (!errorEl) {
+                    errorEl = document.createElement('div');
+                    errorEl.className = config.clientValidation.class;
+                    errorEl.setAttribute('role', 'alert');
+                    errorEl.tabIndex = -1;
+                    var anchor = document.getElementById('recaptcha-container-' + config.inputId) || input;
+                    anchor.insertAdjacentElement('afterend', errorEl);
+                }
+                errorEl.textContent = config.clientValidation.message;
+                errorEl.focus();
+            }
+
+            function clearError() {
+                if (errorEl) {
+                    errorEl.remove();
+                    errorEl = null;
+                }
+            }
+
+            if (config.clientValidation && input.form) {
+                input.form.addEventListener('submit', function (event) {
+                    if (input.value) {
+                        clearError();
+                        return;
+                    }
+                    event.preventDefault();
+                    showError();
+                });
+            }
+
             var enterpriseBase = 'https://www.google.com/recaptcha/enterprise.js';
             var scriptLoads = window.__fraudDefenseRecaptchaScriptLoads = window.__fraudDefenseRecaptchaScriptLoads || {};
 
             function setToken(token) {
                 input.value = token;
+                if (token) {
+                    clearError();
+                }
             }
 
             function whenEnterpriseReady(callback) {
@@ -80,7 +117,8 @@
                     widgetId = grecaptcha.enterprise.render(containerId, {
                         sitekey: config.siteKey,
                         action: config.action,
-                        callback: setToken
+                        callback: setToken,
+                        'expired-callback': function () { setToken(''); }
                     });
                 }
 
@@ -93,6 +131,8 @@
                         .then(function (token) {
                             setToken(token);
                             return token;
+                        }, function (error) {
+                            console.error('[FraudDefense] Failed to get a reCAPTCHA token.', error);
                         });
                 }
 

@@ -82,7 +82,7 @@ class SmsRecaptchaType extends AbstractRecaptchaFormType
                 return;
             }
 
-            $this->addFormError($form, $this->apiErrorMessage($e, $options));
+            $this->addApiError($form, $e, $options);
 
             return;
         }

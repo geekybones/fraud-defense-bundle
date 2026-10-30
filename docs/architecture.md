@@ -90,7 +90,7 @@ src/
 |   +-- AssessmentSerializer.php         Assessment proto -> PHP array (injectable)
 |   +-- AssessmentTokenProperties.php    Normalized tokenProperties from the response
 |   +-- DefenseAssessmentException.php   Wraps AssessmentException; shown on forms
-|   +-- RecaptchaTwigExtension.php       recaptcha_script() Twig function
+|   +-- RecaptchaTwigExtension.php       recaptcha_script() and recaptcha_site_key() Twig functions
 |   +-- SiteKeyResolver.php              Resolves score/checkbox site key by type
 |   +-- TransactionAssessmentContextValidator.php
 |
@@ -158,7 +158,7 @@ All three form types extend `AbstractRecaptchaFormType`, which:
 - Sets `getParent()` to `HiddenType` (the field is a hidden input)
 - Uses `getBlockPrefix() = 'recaptcha'` to select the shared Twig block
 - Registers `POST_SUBMIT` to run the assessment on form submit
-- Exposes `buildView()` variables: `site_key`, `action`, `recaptcha_type`, `load_script`
+- Exposes `buildView()` variables: `site_key`, `action`, `recaptcha_type`, `load_script`, `client_validation` (`null` or `{message, class}`)
 
 The form theme (`@FraudDefense/recaptcha.html.twig`) is auto-prepended to `twig.form_themes` via `PrependExtensionInterface`. It renders the hidden input and, when `load_script` is `true`, inlines the `<script>` tag.
 

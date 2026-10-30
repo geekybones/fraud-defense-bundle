@@ -47,7 +47,7 @@ final class TransactionAssessmentMapper
         }
 
         $riskAnalysis = $assessment->getRiskAnalysis();
-        $score = null !== $riskAnalysis ? $riskAnalysis->getScore() : null;
+        $score = $riskAnalysis?->getScore();
         $transactionRisk = $fraudPrevention->getTransactionRisk();
 
         $passed = AssessmentPassEvaluator::passesRiskBelow(
