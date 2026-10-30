@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace GeekyBones\FraudDefenseBundle\Defense\Model;
 
-final readonly class TransactionAddress
+final class TransactionAddress
 {
     /**
      * @param list<string> $addressLines
      */
     public function __construct(
-        public string $regionCode,
-        public string $postalCode,
-        public string $recipient = '',
-        public array $addressLines = [],
-        public string $locality = '',
-        public string $administrativeArea = '',
+        public readonly string $regionCode,
+        public readonly string $postalCode,
+        public readonly string $recipient = '',
+        public readonly array $addressLines = [],
+        public readonly string $locality = '',
+        public readonly string $administrativeArea = '',
     ) {
     }
 }

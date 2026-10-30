@@ -7,13 +7,13 @@ namespace GeekyBones\FraudDefenseBundle\Defense;
 use Google\Cloud\RecaptchaEnterprise\V1\TokenProperties;
 
 /** Normalized token fields from a Google assessment response. */
-final readonly class AssessmentTokenProperties
+final class AssessmentTokenProperties
 {
     public function __construct(
-        public bool $tokenValid,
-        public string $action,
-        public string $hostname,
-        public int $invalidReason,
+        public readonly bool $tokenValid,
+        public readonly string $action,
+        public readonly string $hostname,
+        public readonly int $invalidReason,
     ) {
     }
 

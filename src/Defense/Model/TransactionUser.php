@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace GeekyBones\FraudDefenseBundle\Defense\Model;
 
-final readonly class TransactionUser
+final class TransactionUser
 {
     public function __construct(
-        public string $accountId = '',
-        public string $email = '',
-        public string $phoneNumber = '',
+        public readonly string $accountId = '',
+        public readonly string $email = '',
+        public readonly string $phoneNumber = '',
     ) {
     }
 }

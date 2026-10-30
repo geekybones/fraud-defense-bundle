@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    name: "PHP ${{ matrix.php }} / Symfony ${{ matrix.symfony }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: "8.1"
+            symfony: "6.4.*"
+          - php: "8.2"
+            symfony: "6.4.*"
+          - php: "8.2"
+            symfony: "7.4.*"
+          - php: "8.3"
+            symfony: "7.4.*"
+          - php: "8.4"
+            symfony: "7.4.*"
+          - php: "8.4"
+            symfony: "8.0.*"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer update --prefer-dist --no-progress --ansi \
+            --with "symfony/config:${{ matrix.symfony }}" \
+            --with "symfony/dependency-injection:${{ matrix.symfony }}" \
+            --with "symfony/form:${{ matrix.symfony }}" \
+            --with "symfony/http-foundation:${{ matrix.symfony }}" \
+            --with "symfony/http-kernel:${{ matrix.symfony }}" \
+            --with "symfony/twig-bridge:${{ matrix.symfony }}" \
+            --with "symfony/yaml:${{ matrix.symfony }}"
+
+      - name: Run tests
+        run: vendor/bin/phpunit

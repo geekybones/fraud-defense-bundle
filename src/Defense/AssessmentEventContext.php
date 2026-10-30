@@ -7,13 +7,13 @@ namespace GeekyBones\FraudDefenseBundle\Defense;
 use Symfony\Component\HttpFoundation\Request;
 
 /** Input for building a Google reCAPTCHA Enterprise assessment event. */
-final readonly class AssessmentEventContext
+final class AssessmentEventContext
 {
     public function __construct(
-        public string $token,
-        public string $siteKey,
-        public string $action = 'default',
-        public ?Request $request = null,
+        public readonly string $token,
+        public readonly string $siteKey,
+        public readonly string $action = 'default',
+        public readonly ?Request $request = null,
     ) {
     }
 }
